@@ -17,28 +17,17 @@ public class HttpProcessor
         _responseHandler = new HttpResponse();
     }
 
-    public void ProcessRequest(TcpClient clientSocket)
+    public async Task ProcessRequest(TcpClient clientSocket)
     {
         using var networkStream = clientSocket.GetStream();
         using var reader = new StreamReader(networkStream);
-        using var writer = new StreamWriter(networkStream) { AutoFlush = true };
+        using var writer = new StreamWriter(networkStream);
+        writer.AutoFlush = true;
 
         var request = _requestHandler.ReadRequest(reader);
         var response = new Response();
 
-        var routeHandler = _router.GetHandler(request.Path);
-
-        if (routeHandler != null)
-        {
-            routeHandler.HandleRequest(request, response);
-        }
-        else
-        {
-            Console.WriteLine($"No handler found for path: {request.Path}");
-            response.StatusCode = 404;
-            response.ReasonPhrase = "Not Found";
-            response.Body = "The requested resource was not found.";
-        }
+        await _router.RouteRequest(request, response);
 
         _responseHandler.SendResponse(writer, response);
     }

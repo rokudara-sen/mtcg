@@ -15,14 +15,17 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="01-Presentation Layer\Endpoints\" />
-      <Folder Include="01-Presentation Layer\Interfaces\" />
       <Folder Include="02-Business Logic Layer\Models\" />
       <Folder Include="02-Business Logic Layer\Validators\" />
-      <Folder Include="03-Data Access Layer\DataContext\" />
       <Folder Include="03-Data Access Layer\Migrations\" />
       <Folder Include="03-Data Access Layer\Repositories\" />
       <Folder Include="06-Domain\Exceptions\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="BCrypt" Version="1.0.0" />
+      <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+      <PackageReference Include="Npgsql" Version="9.0.1" />
     </ItemGroup>
 
 </Project>

@@ -6,13 +6,11 @@ public class TcpServer
 {
     private readonly TcpListener _tcpListener;
     private readonly HttpProcessor _httpProcessor;
-    private readonly UserRepositroy _userRepository;
 
     public TcpServer(IPAddress ipAddress, int port)
     {
         _tcpListener = new TcpListener(ipAddress, port);
         _httpProcessor = new HttpProcessor();
-        _userRepository = new UserRepository();
     }
 
     public void Start()
