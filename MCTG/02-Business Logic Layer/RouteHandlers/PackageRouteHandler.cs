@@ -1,10 +1,11 @@
 using MCTG._01_Shared;
+using MCTG._02_Business_Logic_Layer.Interfaces;
 using MCTG._03_Data_Access_Layer.DataContext;
 using MCTG._06_Domain.Entities;
 
 namespace MCTG._02_Business_Logic_Layer.RouteHandlers;
 
-public class PackageRouteHandler
+public class PackageRouteHandler : IRouteHandler
 {
     private readonly PackageDataContext _dataContext = new(GlobalRegistry._connectionString);
     private readonly UserRouteHandler _userRouteHandler = new();

@@ -4,16 +4,17 @@ namespace MCTG._06_Domain.ValueObjects;
 
 public class Card
 {
-    public Card(string cardId, string cardName, int baseDamage, ElementType elementType, CardType cardType)
+    public Card(int cardId, string cardName, int baseDamage, ElementType elementType, CardType cardType, string identifier)
     {
         CardId = cardId;
         CardName = cardName;
         BaseDamage = baseDamage;
         ElementType = elementType;
         CardType = cardType;
+        Identifier = identifier;
     }
     
-    public string CardId { get; set; }
+    public int CardId { get; set; }
     
     public string CardName { get; set; }
     
@@ -22,4 +23,6 @@ public class Card
     public ElementType ElementType { get; set; }
     
     public CardType CardType { get; set; }
+    
+    public string Identifier { get; set; }
 }
