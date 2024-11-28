@@ -5,18 +5,11 @@ using Npgsql;
 
 namespace MCTG._03_Data_Access_Layer.DataContext;
 
-public class UserDataContext : IDataContext
+public class UserDataContext(string connectionString) : IDataContext
 {
-    private readonly string _connectionString;
-    
-    public UserDataContext(string connectionString)
-    {
-        _connectionString = connectionString;
-    }
-
     public IDbConnection CreateConnection()
     {
-        return new NpgsqlConnection(_connectionString);
+        return new NpgsqlConnection(connectionString);
     }
     
     public void Dispose()
@@ -36,11 +29,11 @@ public class UserDataContext : IDataContext
         }
     }
 
-    public void Remove<T>(int id) where T : class
+    public void Remove<T>(int userId) where T : class
     {
         if (typeof(T) == typeof(User))
         {
-            RemoveUser(id);
+            RemoveUser(userId);
         }
         else
         {
@@ -60,11 +53,11 @@ public class UserDataContext : IDataContext
         }
     }
 
-    public T GetById<T>(int id) where T : class
+    public T GetById<T>(int userId) where T : class
     {
         if (typeof(T) == typeof(User))
         {
-            return GetUserById(id) as T;
+            return GetUserById(userId) as T;
         }
         else
         {
@@ -114,7 +107,7 @@ public class UserDataContext : IDataContext
         connection.Open();
         using IDbCommand command = connection.CreateCommand();
         
-        command.CommandText = "INSERT INTO users (username, password) VALUES (@username, @password) RETURNING id";
+        command.CommandText = "INSERT INTO users (username, password) VALUES (@username, @password) RETURNING userid";
         AddParameterWithValue(command, "@username", DbType.String, user.Username);
         AddParameterWithValue(command, "@password", DbType.String, user.Password);
         
@@ -127,12 +120,14 @@ public class UserDataContext : IDataContext
         connection.Open();
         using IDbCommand command = connection.CreateCommand();
         
-        command.CommandText = "DELETE FROM users WHERE id = @id";
+        command.CommandText = "DELETE FROM users WHERE userid = @userid";
         AddParameterWithValue(command, "@id", DbType.Int32, userId);
         
         command.ExecuteNonQuery();
     }
-
+    
+    /*Method to update all User specific data. Is recquired for battle
+     logic and other stuff to keep track of accurate Gold, Wins, losses, etc.*/
     private void UpdateUser(User user)
     {
         if (user.UserId == null)
@@ -149,12 +144,13 @@ public class UserDataContext : IDataContext
             using IDbCommand command = connection.CreateCommand();
             command.Transaction = transaction;
 
-            command.CommandText = @"UPDATE users SET elo = @elo, gold = @gold, wins = @wins, losses = @losses, ""authToken"" = @authToken WHERE ""userID"" = @id";
-            AddParameterWithValue(command, "@elo", DbType.String, user.Elo);
+            command.CommandText = @"UPDATE users SET elo = @elo, gold = @gold, wins = @wins, losses = @losses, ""authtoken"" = @authtoken WHERE ""userid"" = @userid";
+            AddParameterWithValue(command, "@elo", DbType.Int32, user.Elo);
             AddParameterWithValue(command, "@gold", DbType.Int32, user.Gold);
             AddParameterWithValue(command, "@wins", DbType.Int32, user.Wins);
             AddParameterWithValue(command, "@losses", DbType.Int32, user.Losses);
-            AddParameterWithValue(command, "@authToken", DbType.String, user.AuthToken);
+            AddParameterWithValue(command, "@authtoken", DbType.String, user.Authorization);
+            AddParameterWithValue(command, "@userid", DbType.Int32, user.UserId);
             command.ExecuteNonQuery();
             transaction.Commit();
         }
@@ -165,14 +161,14 @@ public class UserDataContext : IDataContext
         }
     }
 
-    private User GetUserById(int userId)
+    private User? GetUserById(int userId)
     {
         using IDbConnection connection = CreateConnection();
         connection.Open();
         using IDbCommand command = connection.CreateCommand();
         
-        command.CommandText = "SELECT userID, username, password, elo, gold, wins, losses, authtoken FROM users WHERE id = @id";
-        AddParameterWithValue(command, "@id", DbType.Int32, userId);
+        command.CommandText = "SELECT userid, username, password, elo, gold, wins, losses, authtoken FROM users WHERE userid = @userid";
+        AddParameterWithValue(command, "@userid", DbType.Int32, userId);
         
         using IDataReader reader = command.ExecuteReader();
         if (reader.Read())
@@ -182,14 +178,14 @@ public class UserDataContext : IDataContext
         return null;
     }
     
-    private User GetUserByUsername(string username)
+    private User? GetUserByUsername(string username)
     {
         using IDbConnection connection = CreateConnection();
         connection.Open();
         using IDbCommand command = connection.CreateCommand();
         
-        command.CommandText = "SELECT userID, username, password, elo, gold, wins, losses, authtoken FROM users WHERE username = @username";
-        AddParameterWithValue(command, "@username", DbType.Int32, username);
+        command.CommandText = "SELECT userid, username, password, elo, gold, wins, losses, authtoken FROM users WHERE username = @username";
+        AddParameterWithValue(command, "@username", DbType.String, username);
         
         using IDataReader reader = command.ExecuteReader();
         if (reader.Read())
@@ -199,21 +195,17 @@ public class UserDataContext : IDataContext
         return null;
     }
     
-    private User GetUserByAuthToken(string authToken)
+    private User? GetUserByAuthToken(string authToken)
     {
         using IDbConnection connection = CreateConnection();
         connection.Open();
         using IDbCommand command = connection.CreateCommand();
         
-        command.CommandText = @"SELECT ""userID"", username, password, elo, gold, wins, losses, ""authToken"" FROM users WHERE ""authToken"" = @authToken";
-        AddParameterWithValue(command, "@authToken", DbType.String, authToken);
+        command.CommandText = """SELECT "userid", username, password, elo, gold, wins, losses, "authtoken" FROM users WHERE "authtoken" = @authtoken""";
+        AddParameterWithValue(command, "@authtoken", DbType.String, authToken);
         
-        using IDataReader reader = command.ExecuteReader();
-        if (reader.Read())
-        {
-            return MapReaderToUser(reader);
-        }
-        return null;
+        using var reader = command.ExecuteReader();
+        return reader.Read() ? MapReaderToUser(reader) : null;
     }
     
     private User MapReaderToUser(IDataReader reader)
@@ -227,7 +219,7 @@ public class UserDataContext : IDataContext
             Gold = reader.GetInt32(4),
             Wins = reader.GetInt32(5),
             Losses = reader.GetInt32(6),
-            AuthToken = reader.IsDBNull(7) ? null : reader.GetString(7)
+            Authorization = reader.IsDBNull(7) ? null : reader.GetString(7)
         };
     }
 
@@ -240,7 +232,7 @@ public class UserDataContext : IDataContext
         connection.Open();
         using IDbCommand command = connection.CreateCommand();
         
-        command.CommandText = "SELECT userID, username, password, elo, gold, wins, losses, authtoken FROM users";
+        command.CommandText = "SELECT userid, username, password, elo, gold, wins, losses, authtoken FROM users";
         
         using IDataReader reader = command.ExecuteReader();
         while (reader.Read())
@@ -254,13 +246,16 @@ public class UserDataContext : IDataContext
                 Gold = reader.GetInt32(4),
                 Wins = reader.GetInt32(5),
                 Losses = reader.GetInt32(6),
-                AuthToken = reader.GetString(7)
+                Authorization = reader.GetString(7)
             });
         }
         
         return users;
     }
     
+    /*Method to bind parameters with their respective
+     value so that the code stays rather clean instead of
+     it being cluttered.*/
     private void AddParameterWithValue(IDbCommand command, string parameterName, DbType type, object value)
     {
         var parameter = command.CreateParameter();

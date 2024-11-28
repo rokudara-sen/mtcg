@@ -7,22 +7,18 @@ using MCTG._06_Domain.Entities;
 
 namespace MCTG._01_Presentation_Layer.Endpoints;
 
-public class UserEndpoint : IEndpoint
+public class PackageEndpoint : IEndpoint
 {
     private readonly List<Route> _routes;
-    private readonly UserRouteHandler _userRouteHandler;
-
-    public UserEndpoint()
+    private readonly PackageRouteHandler _packageRouteHandler;
+    public PackageEndpoint()
     {
-        _userRouteHandler = new UserRouteHandler();
+        _packageRouteHandler = new PackageRouteHandler();
         _routes = new List<Route>
         {
-            new Route("POST", "/users", HandleRegisterUser),
-            new Route("POST", "/sessions", HandleLoginUser),
-            new Route("GET", "/users/{username}", HandleUpdateUser),
+            new Route("POST", "/packages", HandleCreatePackage),
         };
     }
-
     public async Task HandleRequest(Request request, Response response)
     {
         var route = FindRoute(request, request.Method, request.Path);
@@ -36,6 +32,11 @@ public class UserEndpoint : IEndpoint
             response.ReasonPhrase = "Not Found";
             response.Body = "The requested resource was not found.";
         }
+    }
+
+    public bool CanHandle(Request request)
+    {
+        throw new NotImplementedException();
     }
 
     private Route? FindRoute(Request request, string method, string path)
@@ -80,32 +81,18 @@ public class UserEndpoint : IEndpoint
         return true;
     }
     
-    /*Checks if the Endpoint can handle the path or not*/
-    public bool CanHandle(Request request)
+    private async Task HandleCreatePackage(Request request, Response response)
     {
-        foreach (var route in _routes)
-        {
-            if (string.Equals(route.HttpMethod, request.Method, StringComparison.OrdinalIgnoreCase) &&
-                IsMatch(route.PathPattern, request.Path, out _))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    private async Task HandleRegisterUser(Request request, Response response)
-    {
-        var credentials = JsonSerializer.Deserialize<UserCredentials>(request.Body);
+        var user = JsonSerializer.Deserialize<User>(request.Body);
         
-        if (credentials == null || string.IsNullOrWhiteSpace(credentials.Username) || string.IsNullOrWhiteSpace(credentials.Password))
+        if (user == null || string.IsNullOrWhiteSpace(user.Authorization))
         {
             response.StatusCode = 400;
             response.ReasonPhrase = "Bad Request";
             return;
         }
 
-        var result = await _userRouteHandler.RegisterUserAsync(credentials);
+        var result = await _packageRouteHandler.CreatePackageAsync(user);
 
         if (result.Success)
         {
@@ -115,40 +102,7 @@ public class UserEndpoint : IEndpoint
         else
         {
             response.StatusCode = 400;
-            response.ReasonPhrase = "User already exists";
+            response.ReasonPhrase = "Something went wrong";
         }
-    }
-
-    private async Task HandleLoginUser(Request request, Response response)
-    {
-        var credentials = JsonSerializer.Deserialize<UserCredentials>(request.Body);
-
-        if (credentials == null || string.IsNullOrWhiteSpace(credentials.Username) || string.IsNullOrWhiteSpace(credentials.Password))
-        {
-            response.StatusCode = 400;
-            response.ReasonPhrase = "Bad Request";
-            return;
-        }
-
-        var result = await _userRouteHandler.LoginUserAsync(credentials);
-
-        if (result.Success)
-        {
-            response.StatusCode = 200;
-            response.ReasonPhrase = "OK";
-            response.Body = result.Data + "\n";
-        }
-        else
-        {
-            response.StatusCode = 401;
-            response.ReasonPhrase = "Login Failed";
-            response.Body = result.ErrorMessage;
-        }
-    }
-
-    
-    private async Task HandleUpdateUser(Request request, Response response)
-    {
-        // Implementation
     }
 }

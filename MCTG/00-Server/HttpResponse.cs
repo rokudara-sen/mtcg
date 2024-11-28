@@ -4,11 +4,11 @@ namespace MCTG._00_Server;
 
 public class HttpResponse
 {
-    public void SendResponse(StreamWriter writer, Response response)
+    public async Task SendResponseAsync(StreamWriter writer, Response response)
     {
-        var writerAlsoToConsole = new StreamTracer(writer);  // Helper class to write to both client and console
-            
-        writerAlsoToConsole.WriteLine($"{response.HttpVersion} {response.StatusCode} {response.ReasonPhrase}");
+        var writerAlsoToConsole = new StreamTracer(writer);
+
+        await writerAlsoToConsole.WriteLineAsync($"{response.HttpVersion} {response.StatusCode} {response.ReasonPhrase}");
 
         // Ensure Content-Length header is set
         if (!response.Headers.ContainsKey("Content-Length"))
@@ -19,16 +19,16 @@ public class HttpResponse
         // Write headers
         foreach (var header in response.Headers)
         {
-            writerAlsoToConsole.WriteLine($"{header.Key}: {header.Value}");
+            await writerAlsoToConsole.WriteLineAsync($"{header.Key}: {header.Value}");
         }
 
         // Empty line to indicate end of headers
-        writerAlsoToConsole.WriteLine();
+        await writerAlsoToConsole.WriteLineAsync();
 
         // Write the body
         if (!string.IsNullOrEmpty(response.Body))
         {
-            writerAlsoToConsole.WriteLine(response.Body);
+            await writerAlsoToConsole.WriteLineAsync(response.Body);
         }
 
         Console.WriteLine("========================================");

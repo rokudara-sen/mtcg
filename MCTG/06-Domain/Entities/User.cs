@@ -36,5 +36,5 @@ public class User
     
     public int Losses { get; set; }
     
-    public string AuthToken { get; set; }
+    public string Authorization { get; set; }
 }

@@ -5,9 +5,9 @@ namespace MCTG;
 
 class Program
 {
-    static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
-        var tcpServer = new TcpServer(IPAddress.Loopback, 10001);
-        tcpServer.Start();
+        var server = new TcpServer(IPAddress.Any, 10001);
+        await server.StartAsync();
     }
 }

@@ -24,11 +24,11 @@ public class HttpProcessor
         using var writer = new StreamWriter(networkStream);
         writer.AutoFlush = true;
 
-        var request = _requestHandler.ReadRequest(reader);
+        var request = await _requestHandler.ReadRequestAsync(reader);
         var response = new Response();
 
         await _router.RouteRequest(request, response);
 
-        _responseHandler.SendResponse(writer, response);
+        await _responseHandler.SendResponseAsync(writer, response);
     }
 }

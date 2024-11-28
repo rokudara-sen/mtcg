@@ -13,7 +13,7 @@ public class TcpServer
         _httpProcessor = new HttpProcessor();
     }
 
-    public void Start()
+    public async Task StartAsync()
     {
         Console.WriteLine("Listening for connections...");
 
@@ -23,9 +23,8 @@ public class TcpServer
         {
             try
             {
-                var clientSocket = _tcpListener.AcceptTcpClient();
-                var thread = new Thread(() => ProcessRequest(clientSocket));
-                thread.Start();
+                var clientSocket = await _tcpListener.AcceptTcpClientAsync();
+                _ = Task.Run(() => ProcessRequestAsync(clientSocket));
             }
             catch (Exception exception)
             {
@@ -34,8 +33,20 @@ public class TcpServer
         }
     }
 
-    private void ProcessRequest(TcpClient clientSocket)
+    private async Task ProcessRequestAsync(TcpClient clientSocket)
     {
-        _httpProcessor.ProcessRequest(clientSocket);
+        try
+        {
+            await _httpProcessor.ProcessRequest(clientSocket);
+        }
+        catch (Exception exception)
+        {
+            Console.WriteLine($"Error processing request: {exception.Message}");
+            Console.WriteLine(exception.StackTrace);
+        }
+        finally
+        {
+            clientSocket.Close();
+        }
     }
 }

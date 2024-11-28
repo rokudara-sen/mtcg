@@ -9,15 +9,15 @@ internal class StreamTracer
         this.streamWriter = streamWriter;
     }
 
-    internal void WriteLine(string v)
+    internal async Task WriteLineAsync(string v)
     {
         Console.WriteLine(v);
-        streamWriter.WriteLine(v);
+        await streamWriter.WriteLineAsync(v);
     }
 
-    internal void WriteLine()
+    internal async Task WriteLineAsync()
     {
         Console.WriteLine();
-        streamWriter.WriteLine();
+        await streamWriter.WriteLineAsync();
     }
 }

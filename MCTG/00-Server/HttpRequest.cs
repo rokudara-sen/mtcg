@@ -4,12 +4,12 @@ namespace MCTG._00_Server;
 
 public class HttpRequest
 {
-    public Request ReadRequest(StreamReader reader)
+    public async Task<Request> ReadRequestAsync(StreamReader reader)
     {
         var request = new Request();
 
         // ----- 1. Read the Request Line -----
-        string? line = reader.ReadLine();
+        string? line = await reader.ReadLineAsync();
         if (line != null)
         {
             Console.WriteLine(line);
@@ -23,7 +23,7 @@ public class HttpRequest
         }
 
         // ----- 2. Read the Headers -----
-        while ((line = reader.ReadLine()) != null)
+        while ((line = await reader.ReadLineAsync()) != null)
         {
             Console.WriteLine(line);
             if (string.IsNullOrEmpty(line))
@@ -46,7 +46,7 @@ public class HttpRequest
             && contentLength > 0)
         {
             char[] buffer = new char[contentLength];
-            int read = reader.ReadBlock(buffer, 0, contentLength);
+            int read = await reader.ReadBlockAsync(buffer, 0, contentLength);
             request.Body = new string(buffer, 0, read);
             Console.WriteLine(request.Body);
         }
