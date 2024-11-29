@@ -29,21 +29,58 @@ public class CardDataContext(string connectionString) : IDataContext
         }
     }
     
+    public T GetById<T>(string id) where T : class
+    {
+        if (typeof(T) == typeof(Card))
+        {
+            return GetCardById(id) as T;
+        }
+        else
+        {
+            throw new NotSupportedException($"Get<{typeof(T).Name}> is not supported.");
+        }
+    }
+    
     private void AddCard(Card card)
     {
         using IDbConnection connection = CreateConnection();
         connection.Open();
         using IDbCommand command = connection.CreateCommand();
-
-        command.CommandText = "INSERT INTO cards (cardName, baseDamage, elementType, cardType, identifier) VALUES (@cardName, @baseDamage, @elementType, @cardType, @identifier) RETURNING cardid";
+        command.CommandText = @"INSERT INTO cards (""cardName"", ""baseDamage"", ""elementType"", ""cardType"", identifier) 
+                                    VALUES (@cardName, @damage, @elementType, @cardType, @identifier) RETURNING cardid";
         AddParameterWithValue(command, "@cardName", DbType.String, card.CardName);
-        AddParameterWithValue(command, "@baseDamage", DbType.Int32, card.BaseDamage);
+        AddParameterWithValue(command, "@damage", DbType.Int32, card.Damage);
         AddParameterWithValue(command, "@elementType", DbType.String, card.ElementType);
         AddParameterWithValue(command, "@cardType", DbType.String, card.CardType);
-        AddParameterWithValue(command, "@identifier", DbType.String, card.Identifier);
+        AddParameterWithValue(command, "@identifier", DbType.String, card.Id);
         
         
         card.CardId = Convert.ToInt32(command.ExecuteScalar());
+    }
+
+    private Card? GetCardById(string id)
+    {
+        using IDbConnection connection = CreateConnection();
+        connection.Open();
+        using IDbCommand command = connection.CreateCommand();
+        
+        command.CommandText = "SELECT identifier FROM cards WHERE identifier = @id";
+        AddParameterWithValue(command, "@id", DbType.Int32, id);
+        
+        using IDataReader reader = command.ExecuteReader();
+        if (reader.Read())
+        {
+            return MapReaderToCard(reader);
+        }
+        return null;
+    }
+    
+    private Card MapReaderToCard(IDataReader reader)
+    {
+        return new Card
+        {
+            Id = reader.GetString(5),
+        };
     }
     
     private void AddParameterWithValue(IDbCommand command, string parameterName, DbType type, object value)
