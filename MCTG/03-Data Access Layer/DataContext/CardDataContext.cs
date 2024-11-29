@@ -46,7 +46,7 @@ public class CardDataContext(string connectionString) : IDataContext
         using IDbConnection connection = CreateConnection();
         connection.Open();
         using IDbCommand command = connection.CreateCommand();
-        command.CommandText = @"INSERT INTO cards (""cardName"", ""baseDamage"", ""elementType"", ""cardType"", identifier) 
+        command.CommandText = @"INSERT INTO mtcgdatabase.public.cards (""cardName"", ""baseDamage"", ""elementType"", ""cardType"", identifier) 
                                     VALUES (@cardName, @damage, @elementType, @cardType, @identifier) RETURNING cardid";
         AddParameterWithValue(command, "@cardName", DbType.String, card.CardName);
         AddParameterWithValue(command, "@damage", DbType.Int32, card.Damage);
@@ -64,7 +64,7 @@ public class CardDataContext(string connectionString) : IDataContext
         connection.Open();
         using IDbCommand command = connection.CreateCommand();
         
-        command.CommandText = "SELECT identifier FROM cards WHERE identifier = @id";
+        command.CommandText = "SELECT identifier FROM mtcgdatabase.public.cards WHERE identifier = @id";
         AddParameterWithValue(command, "@id", DbType.Int32, id);
         
         using IDataReader reader = command.ExecuteReader();

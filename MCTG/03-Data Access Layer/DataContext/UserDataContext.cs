@@ -107,7 +107,7 @@ public class UserDataContext(string connectionString) : IDataContext
         connection.Open();
         using IDbCommand command = connection.CreateCommand();
         
-        command.CommandText = "INSERT INTO users (username, password) VALUES (@username, @password) RETURNING userid";
+        command.CommandText = "INSERT INTO mtcgdatabase.public.users (username, password) VALUES (@username, @password) RETURNING userid";
         AddParameterWithValue(command, "@username", DbType.String, user.Username);
         AddParameterWithValue(command, "@password", DbType.String, user.Password);
         
@@ -144,7 +144,7 @@ public class UserDataContext(string connectionString) : IDataContext
             using IDbCommand command = connection.CreateCommand();
             command.Transaction = transaction;
 
-            command.CommandText = @"UPDATE users SET elo = @elo, gold = @gold, wins = @wins, losses = @losses, ""authtoken"" = @authtoken WHERE ""userid"" = @userid";
+            command.CommandText = @"UPDATE mtcgdatabase.public.users SET elo = @elo, gold = @gold, wins = @wins, losses = @losses, ""authtoken"" = @authtoken WHERE ""userid"" = @userid";
             AddParameterWithValue(command, "@elo", DbType.Int32, user.Elo);
             AddParameterWithValue(command, "@gold", DbType.Int32, user.Gold);
             AddParameterWithValue(command, "@wins", DbType.Int32, user.Wins);
@@ -167,7 +167,7 @@ public class UserDataContext(string connectionString) : IDataContext
         connection.Open();
         using IDbCommand command = connection.CreateCommand();
         
-        command.CommandText = "SELECT userid, username, password, elo, gold, wins, losses, authtoken FROM users WHERE userid = @userid";
+        command.CommandText = "SELECT userid, username, password, elo, gold, wins, losses, authtoken FROM mtcgdatabase.public.users WHERE userid = @userid";
         AddParameterWithValue(command, "@userid", DbType.Int32, userId);
         
         using IDataReader reader = command.ExecuteReader();
@@ -184,7 +184,7 @@ public class UserDataContext(string connectionString) : IDataContext
         connection.Open();
         using IDbCommand command = connection.CreateCommand();
         
-        command.CommandText = "SELECT userid, username, password, elo, gold, wins, losses, authtoken FROM users WHERE username = @username";
+        command.CommandText = "SELECT userid, username, password, elo, gold, wins, losses, authtoken FROM mtcgdatabase.public.users WHERE username = @username";
         AddParameterWithValue(command, "@username", DbType.String, username);
         
         using IDataReader reader = command.ExecuteReader();
@@ -201,7 +201,7 @@ public class UserDataContext(string connectionString) : IDataContext
         connection.Open();
         using IDbCommand command = connection.CreateCommand();
         
-        command.CommandText = """SELECT "userid", username, password, elo, gold, wins, losses, "authtoken" FROM users WHERE "authtoken" = @authtoken""";
+        command.CommandText = """SELECT "userid", username, password, elo, gold, wins, losses, "authtoken" FROM mtcgdatabase.public.users WHERE "authtoken" = @authtoken""";
         AddParameterWithValue(command, "@authtoken", DbType.String, authToken);
         
         using var reader = command.ExecuteReader();
@@ -232,7 +232,7 @@ public class UserDataContext(string connectionString) : IDataContext
         connection.Open();
         using IDbCommand command = connection.CreateCommand();
         
-        command.CommandText = "SELECT userid, username, password, elo, gold, wins, losses, authtoken FROM users";
+        command.CommandText = "SELECT userid, username, password, elo, gold, wins, losses, authtoken FROM mtcgdatabase.public.users";
         
         using IDataReader reader = command.ExecuteReader();
         while (reader.Read())
