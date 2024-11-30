@@ -12,6 +12,7 @@ public class User
 
     public User(string username, string password)
     {
+        UserId = 0;
         Username = username;
         Password = password;
         Elo = 100;

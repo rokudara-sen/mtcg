@@ -43,9 +43,9 @@ public class StackRouteHandler : IRouteHandler
     private bool CardAlreadyExistInStash(Card card)
     {
         var tempCard = _dataContext.GetById<Card>(card.Id);
-        if (tempCard.Id == card.Id)
-            return true;
-        return false;
+        if (tempCard == null || tempCard.Id != card.Id)
+            return false;
+        return tempCard.Id == card.Id;
     }
     
     private void IncreaseCardAmountInStash(Card card)

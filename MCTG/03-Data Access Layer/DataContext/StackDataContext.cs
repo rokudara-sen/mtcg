@@ -1,6 +1,5 @@
 using System.Data;
 using MCTG._03_Data_Access_Layer.Interfaces;
-using MCTG._06_Domain.Entities;
 using MCTG._06_Domain.ValueObjects;
 using Npgsql;
 
@@ -29,7 +28,7 @@ public class StackDataContext(string connectionString) : IDataContext
         }
     }
     
-    public T GetById<T>(string id) where T : class
+    public T? GetById<T>(string id) where T : class
     {
         if (typeof(T) == typeof(Card))
         {
@@ -117,7 +116,7 @@ public class StackDataContext(string connectionString) : IDataContext
         return null;
     }
     
-    private Card MapReaderToCard(IDataReader reader)
+    private static Card MapReaderToCard(IDataReader reader)
     {
         return new Card
         {
@@ -125,7 +124,7 @@ public class StackDataContext(string connectionString) : IDataContext
         };
     }
     
-    private void AddParameterWithValue(IDbCommand command, string parameterName, DbType type, object value)
+    private static void AddParameterWithValue(IDbCommand command, string parameterName, DbType type, object value)
     {
         var parameter = command.CreateParameter();
         parameter.ParameterName = parameterName;

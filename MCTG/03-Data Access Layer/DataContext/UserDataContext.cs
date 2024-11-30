@@ -53,7 +53,7 @@ public class UserDataContext(string connectionString) : IDataContext
         }
     }
 
-    public T GetById<T>(int userId) where T : class
+    public T? GetById<T>(int userId) where T : class
     {
         if (typeof(T) == typeof(User))
         {
@@ -65,7 +65,7 @@ public class UserDataContext(string connectionString) : IDataContext
         }
     }
     
-    public T GetByUsername<T>(string username) where T : class
+    public T? GetByUsername<T>(string username) where T : class
     {
         if (typeof(T) == typeof(User))
         {
@@ -77,7 +77,7 @@ public class UserDataContext(string connectionString) : IDataContext
         }
     }
     
-    public T GetByAuthToken<T>(string authToken) where T : class
+    public T? GetByAuthToken<T>(string authToken) where T : class
     {
         if (typeof(T) == typeof(User))
         {
@@ -101,8 +101,12 @@ public class UserDataContext(string connectionString) : IDataContext
         }
     }
 
-    private void AddUser(User user)
+    private void AddUser(User? user)
     {
+        if (user == null)
+        {
+            throw new InvalidDataException("User class cannot be null");
+        }
         using IDbConnection connection = CreateConnection();
         connection.Open();
         using IDbCommand command = connection.CreateCommand();
@@ -128,11 +132,11 @@ public class UserDataContext(string connectionString) : IDataContext
     
     /*Method to update all User specific data. Is recquired for battle
      logic and other stuff to keep track of accurate Gold, Wins, losses, etc.*/
-    private void UpdateUser(User user)
+    private void UpdateUser(User? user)
     {
-        if (user.UserId == null)
+        if (user == null || user.UserId == 0)
         {
-            throw new ArgumentNullException("User id cannot be null");
+            throw new InvalidDataException("User not found");
         }
         
         using IDbConnection connection = CreateConnection();
@@ -208,9 +212,12 @@ public class UserDataContext(string connectionString) : IDataContext
         return reader.Read() ? MapReaderToUser(reader) : null;
     }
     
+    
+    /*Maps the new values to a User class class so that the most
+     current values from the database can be used*/
     private User MapReaderToUser(IDataReader reader)
     {
-        return new User
+        return new User()
         {
             UserId = reader.GetInt32(0),
             Username = reader.GetString(1),
@@ -219,7 +226,7 @@ public class UserDataContext(string connectionString) : IDataContext
             Gold = reader.GetInt32(4),
             Wins = reader.GetInt32(5),
             Losses = reader.GetInt32(6),
-            Authorization = reader.IsDBNull(7) ? null : reader.GetString(7)
+            Authorization = reader.IsDBNull(7) ? string.Empty : reader.GetString(7)
         };
     }
 
@@ -261,7 +268,7 @@ public class UserDataContext(string connectionString) : IDataContext
         var parameter = command.CreateParameter();
         parameter.ParameterName = parameterName;
         parameter.DbType = type;
-        parameter.Value = value ?? DBNull.Value;
+        parameter.Value = value;
         command.Parameters.Add(parameter);
     }
 }

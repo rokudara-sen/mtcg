@@ -15,12 +15,12 @@ public class UserEndpoint : IEndpoint
     public UserEndpoint()
     {
         _userRouteHandler = new UserRouteHandler();
-        _routes = new List<Route>
-        {
+        _routes =
+        [
             new Route("POST", "/users", HandleRegisterUser),
             new Route("POST", "/sessions", HandleLoginUser),
-            new Route("GET", "/users/{username}", HandleUpdateUser),
-        };
+            // new Route("GET", "/users/{username}", HandleUpdateUser)
+        ];
     }
 
     public async Task HandleRequest(Request request, Response response)
@@ -105,7 +105,7 @@ public class UserEndpoint : IEndpoint
             return;
         }
 
-        var result = await _userRouteHandler.RegisterUserAsync(credentials);
+        var result = await Task.Run(() => _userRouteHandler.RegisterUser(credentials));
 
         if (result.Success)
         {
@@ -130,7 +130,7 @@ public class UserEndpoint : IEndpoint
             return;
         }
 
-        var result = await _userRouteHandler.LoginUserAsync(credentials);
+        var result = await Task.Run(() => _userRouteHandler.LoginUser(credentials));
 
         if (result.Success)
         {
@@ -147,8 +147,8 @@ public class UserEndpoint : IEndpoint
     }
 
     
-    private async Task HandleUpdateUser(Request request, Response response)
-    {
-        // Implementation
-    }
+    // private async Task HandleUpdateUser(Request request, Response response)
+    // {
+    //     // Implementation
+    // }
 }
