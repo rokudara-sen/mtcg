@@ -5,7 +5,7 @@ namespace MTCG._06_Domain.ValueObjects;
 
 public class Card
 {
-    public Card(int cardId = -1, string cardName = "NULL", int damage = -1, ElementType elementType = ElementType.None, CardType cardType = CardType.None, string id = "NULL")
+    public Card(int cardId = -1, string cardName = "", float damage = -1.0f, ElementType elementType = ElementType.NotDefined, CardType cardType = CardType.NotDefined, string id = "")
     {
         CardId = cardId;
         CardName = cardName;
@@ -21,7 +21,7 @@ public class Card
     public string CardName { get; set; }
     
     [JsonPropertyName("Damage")]
-    public int Damage { get; set; }
+    public float Damage { get; set; }
     
     public ElementType ElementType { get; set; }
     

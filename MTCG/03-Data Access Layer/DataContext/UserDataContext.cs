@@ -64,7 +64,12 @@ public class UserDataContext(string connectionString) : IDataContext
             throw new NotSupportedException($"Get<{typeof(T).Name}> is not supported.");
         }
     }
-    
+
+    public T? GetByStringId<T>(string id) where T : class
+    {
+        throw new NotImplementedException();
+    }
+
     public T? GetByUsername<T>(string username) where T : class
     {
         if (typeof(T) == typeof(User))

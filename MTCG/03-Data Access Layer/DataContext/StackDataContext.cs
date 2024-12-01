@@ -27,8 +27,23 @@ public class StackDataContext(string connectionString) : IDataContext
             throw new NotSupportedException($"Add<{typeof(T).Name}> is not supported");
         }
     }
-    
-    public T? GetById<T>(string id) where T : class
+
+    public void Remove<T>(int tableId) where T : class
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Update<T>(T entity) where T : class
+    {
+        throw new NotImplementedException();
+    }
+
+    public T? GetById<T>(int tableId) where T : class
+    {
+        throw new NotImplementedException();
+    }
+
+    public T? GetByStringId<T>(string id) where T : class
     {
         if (typeof(T) == typeof(Card))
         {

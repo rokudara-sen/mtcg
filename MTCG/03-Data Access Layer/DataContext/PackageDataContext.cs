@@ -6,7 +6,7 @@ using Npgsql;
 
 namespace MTCG._03_Data_Access_Layer.DataContext;
 
-public class PackageDataContext(string connectionString) : IDataContext
+public class PackageDataContext(string connectionString) : IDisposable
 {
     private readonly CardDataContext _cardDataContext = new CardDataContext(connectionString);
     public IDbConnection CreateConnection()
@@ -24,10 +24,6 @@ public class PackageDataContext(string connectionString) : IDataContext
         if (typeof(T) == typeof(Package))
         {
             AddPackage(entity as Package);
-        }
-        else if (typeof(T) == typeof(Card))
-        {
-            _cardDataContext.Add(entity as Card);
         }
         else
         {

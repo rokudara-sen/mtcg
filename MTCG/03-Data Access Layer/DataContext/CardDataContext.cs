@@ -1,4 +1,5 @@
 using System.Data;
+using MTCG._01_Shared.Enums;
 using MTCG._03_Data_Access_Layer.Interfaces;
 using MTCG._06_Domain.ValueObjects;
 using Npgsql;
@@ -32,8 +33,23 @@ public class CardDataContext(string connectionString) : IDataContext
             throw new NotSupportedException($"Add<{typeof(T).Name}> is not supported");
         }
     }
-    
-    public T GetById<T>(string id) where T : class
+
+    public void Remove<T>(int tableId) where T : class
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Update<T>(T entity) where T : class
+    {
+        throw new NotImplementedException();
+    }
+
+    public T? GetById<T>(int tableId) where T : class
+    {
+        throw new NotImplementedException();
+    }
+
+    public T? GetByStringId<T>(string id) where T : class
     {
         if (typeof(T) == typeof(Card))
         {
@@ -54,8 +70,8 @@ public class CardDataContext(string connectionString) : IDataContext
                                     VALUES (@cardName, @damage, @elementType, @cardType, @identifier) RETURNING cardid";
         AddParameterWithValue(command, "@cardName", DbType.String, card.CardName);
         AddParameterWithValue(command, "@damage", DbType.Int32, card.Damage);
-        AddParameterWithValue(command, "@elementType", DbType.String, card.ElementType);
-        AddParameterWithValue(command, "@cardType", DbType.String, card.CardType);
+        AddParameterWithValue(command, "@elementType", DbType.Int32, (int)card.ElementType);
+        AddParameterWithValue(command, "@cardType", DbType.Int32, (int)card.CardType);
         AddParameterWithValue(command, "@identifier", DbType.String, card.Id);
         
         
@@ -69,7 +85,7 @@ public class CardDataContext(string connectionString) : IDataContext
         using IDbCommand command = connection.CreateCommand();
         
         command.CommandText = "SELECT identifier FROM mtcgdatabase.public.cards WHERE identifier = @id";
-        AddParameterWithValue(command, "@id", DbType.Int32, id);
+        AddParameterWithValue(command, "@id", DbType.String, id);
         
         using IDataReader reader = command.ExecuteReader();
         if (reader.Read())
@@ -83,7 +99,12 @@ public class CardDataContext(string connectionString) : IDataContext
     {
         return new Card
         {
-            Id = reader.GetString(5),
+            CardId = reader.GetInt32(0),
+            CardName = reader.GetString(1),
+            Damage = reader.GetInt32(2),
+            ElementType = (ElementType)reader.GetInt32(3),
+            CardType = (CardType)reader.GetInt32(4),
+            Id = reader.GetString(5)
         };
     }
     

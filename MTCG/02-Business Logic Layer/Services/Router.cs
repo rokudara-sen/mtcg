@@ -13,10 +13,12 @@ public class Router
 
     public Router()
     {
-        _endpoints = new List<IEndpoint>
-        {
+        _endpoints =
+        [
             new UserEndpoint(),
-        };
+            new PackageEndpoint(),
+            new StackEndpoint()
+        ];
     }
     public async Task RouteRequest(Request request, Response response)
     {

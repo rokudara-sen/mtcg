@@ -19,10 +19,9 @@ public class PackageEndpoint : IEndpoint
     {
         _packageRouteHandler = new PackageRouteHandler();
         _userRouteHandler = new UserRouteHandler();
-        _routes = new List<Route>
-        {
-            new Route("POST", "/packages", HandleCreatePackage),
-        };
+        _routes = [
+            new Route("POST", "/packages", HandleCreatePackage)
+        ];
     }
     public async Task HandleRequest(Request request, Response response)
     {
@@ -41,7 +40,15 @@ public class PackageEndpoint : IEndpoint
 
     public bool CanHandle(Request request)
     {
-        throw new NotImplementedException();
+        foreach (var route in _routes)
+        {
+            if (string.Equals(route.HttpMethod, request.Method, StringComparison.OrdinalIgnoreCase) &&
+                IsMatch(route.PathPattern, request.Path, out _))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Route? FindRoute(Request request, string method, string path)
@@ -95,7 +102,7 @@ public class PackageEndpoint : IEndpoint
             return;
         }
         
-        var user = _userRouteHandler.GetUserByAuthToken(authHeader.Replace("Bearer ", ""));
+        var user = await Task.Run(() => _userRouteHandler.GetUserByAuthToken(authHeader.Replace("Bearer ", "")));
         
         if (user == null || !_packageRouteHandler.CheckIfAdmin(user))
         {
@@ -104,7 +111,7 @@ public class PackageEndpoint : IEndpoint
             return;
         }
 
-        ConcurrentBag<Card> cardsBag;
+        List<Card> cardsList;
         try
         {
             var options = new JsonSerializerOptions
@@ -112,7 +119,7 @@ public class PackageEndpoint : IEndpoint
                 PropertyNameCaseInsensitive = true
             };
             
-            cardsBag = JsonSerializer.Deserialize<ConcurrentBag<Card>>(request.Body, options);
+            cardsList = JsonSerializer.Deserialize<List<Card>>(request.Body, options);
         }
         catch (JsonException ex)
         {
@@ -121,16 +128,16 @@ public class PackageEndpoint : IEndpoint
             return;
         }
         
-        if (cardsBag == null || cardsBag.IsEmpty)
+        if (cardsList == null || cardsList.Count == 0)
         {
             response.StatusCode = 400;
             response.ReasonPhrase = "Bad Request: No Cards Provided";
             return;
         }
 
-        var package = new Package(cardsBag);
+        var package = new Package(cardsList);
         
-        var result = _packageRouteHandler.CreatePackage(user, package);
+        var result = await Task.Run(() => _packageRouteHandler.CreatePackage(user, package));
 
         if (result.Success)
         {

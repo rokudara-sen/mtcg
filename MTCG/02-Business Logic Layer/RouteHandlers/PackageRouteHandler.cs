@@ -9,6 +9,7 @@ namespace MTCG._02_Business_Logic_Layer.RouteHandlers;
 public class PackageRouteHandler : IRouteHandler
 {
     private readonly PackageDataContext _dataContext = new(GlobalRegistry._connectionString);
+    private readonly CardRouteHandler _cardRouteHandler = new();
     private readonly UserRouteHandler _userRouteHandler = new();
     
     public OperationResult CreatePackage(User user, Package package)
@@ -25,7 +26,7 @@ public class PackageRouteHandler : IRouteHandler
        
         foreach (var card in package.Cards)
         {
-            _dataContext.Add(card);
+            _cardRouteHandler.CreateCard(card);
         }
         
         _dataContext.Add(package);
