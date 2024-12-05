@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using MTCG._00_Server;
 using MTCG._01_Presentation_Layer.Endpoints;
 using MTCG._01_Presentation_Layer.Interfaces;
@@ -8,6 +9,7 @@ using MTCG._02_Business_Logic_Layer.Services;
 using MTCG._03_Data_Access_Layer.DataContext;
 using MTCG._03_Data_Access_Layer.Interfaces;
 using MTCG._03_Data_Access_Layer.Repositories;
+using MTCG._03_Data_Access_Layer.Services;
 
 namespace MTCG;
 
@@ -28,6 +30,7 @@ class Program
         serviceCollection.AddTransient<ICardRepository, CardRepository>();
         serviceCollection.AddTransient<IPackageRepository, PackageRepository>();
         serviceCollection.AddTransient<IUserRepository, UserRepository>();
+        serviceCollection.AddTransient<IStackRepository, StackRepository>();
         // Register other repositories as needed
 
         // Register Route Handlers
@@ -40,6 +43,9 @@ class Program
         serviceCollection.AddTransient<IEndpoint, PackageEndpoint>();
         serviceCollection.AddTransient<IEndpoint, UserEndpoint>();
         // Register other endpoints as needed
+        
+        // Register Services
+        serviceCollection.AddTransient<PackageAcquisitionService>();
 
         // Build the ServiceProvider
         var serviceProvider = serviceCollection.BuildServiceProvider();

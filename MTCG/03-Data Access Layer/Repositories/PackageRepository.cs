@@ -71,6 +71,59 @@ namespace MTCG._03_Data_Access_Layer.Repositories
         {
             throw new NotImplementedException();
         }
+        
+        public Package? GetNextAvailablePackage(IDbConnection connection, IDbTransaction transaction)
+        {
+            using IDbCommand command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = @"
+        SELECT packageid, ""cardSlot1"", ""cardSlot2"", ""cardSlot3"", ""cardSlot4"", ""cardSlot5"", cost
+        FROM mtcgdatabase.public.packages
+        LIMIT 1";
+
+            using IDataReader reader = command.ExecuteReader();
+
+            if (reader.Read())
+            {
+                int packageId = reader.GetInt32(0);
+                var cardIds = new List<int>
+                {
+                    reader.GetInt32(1),
+                    reader.GetInt32(2),
+                    reader.GetInt32(3),
+                    reader.GetInt32(4),
+                    reader.GetInt32(5)
+                };
+                int cost = reader.GetInt32(6);
+
+                var cards = cardIds.Select(id => _cardRepository.GetCardById(id)).ToList();
+
+                if (cards.Any(c => c == null))
+                {
+                    throw new Exception("One or more cards in the package do not exist.");
+                }
+
+                var package = new Package(cards, cost)
+                {
+                    PackageId = packageId
+                };
+
+                return package;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public void RemovePackage(int packageId, IDbConnection connection, IDbTransaction transaction)
+        {
+            using IDbCommand command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = @"DELETE FROM mtcgdatabase.public.packages WHERE packageid = @packageId";
+            AddParameterWithValue(command, "@packageId", DbType.Int32, packageId);
+            command.ExecuteNonQuery();
+        }
 
         private void AddParameterWithValue(IDbCommand command, string parameterName, DbType type, object value)
         {

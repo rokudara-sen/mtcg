@@ -114,6 +114,32 @@ namespace MTCG._03_Data_Access_Layer.Repositories
                 throw;
             }
         }
+        
+        public void UpdateUserWithConnection(User user, IDbConnection connection, IDbTransaction transaction)
+        {
+            if (user == null || user.UserId == 0)
+            {
+                throw new InvalidDataException("User not found");
+            }
+
+            using IDbCommand command = connection.CreateCommand();
+            command.Transaction = transaction;
+
+            command.CommandText = @"
+        UPDATE mtcgdatabase.public.users 
+        SET elo = @elo, gold = @gold, wins = @wins, losses = @losses, ""authtoken"" = @authtoken 
+        WHERE ""userid"" = @userid";
+
+            AddParameterWithValue(command, "@elo", DbType.Int32, user.Elo);
+            AddParameterWithValue(command, "@gold", DbType.Int32, user.Gold);
+            AddParameterWithValue(command, "@wins", DbType.Int32, user.Wins);
+            AddParameterWithValue(command, "@losses", DbType.Int32, user.Losses);
+            AddParameterWithValue(command, "@authtoken", DbType.String, user.Authorization);
+            AddParameterWithValue(command, "@userid", DbType.Int32, user.UserId);
+
+            command.ExecuteNonQuery();
+        }
+
 
         private User MapReaderToUser(IDataReader reader)
         {

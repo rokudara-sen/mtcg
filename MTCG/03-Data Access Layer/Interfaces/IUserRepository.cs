@@ -1,3 +1,4 @@
+using System.Data;
 using MTCG._06_Domain.Entities;
 
 namespace MTCG._03_Data_Access_Layer.Interfaces;
@@ -9,4 +10,5 @@ public interface IUserRepository
     User? GetUserByUsername(string username);
     User? GetUserByAuthToken(string token);
     public void UpdateUser(User? user);
+    public void UpdateUserWithConnection(User user, IDbConnection connection, IDbTransaction transaction);
 }
