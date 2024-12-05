@@ -22,7 +22,7 @@ public class PackageAcquisitionService
         _dataContext = dataContext ?? throw new ArgumentNullException(nameof(dataContext));
     }
 
-    public OperationResult AcquirePackage(User user)
+    public OperationResult AcquirePackage(User? user)
     {
         if (user == null)
             return new OperationResult { Success = false, ErrorMessage = "Invalid user." };
@@ -31,7 +31,7 @@ public class PackageAcquisitionService
 
         if (user.Gold < packageCost)
         {
-            return new OperationResult { Success = false, ErrorMessage = "Not enough gold to purchase a package." };
+            return new OperationResult { Success = false, ErrorMessage = "Not enough money." };
         }
 
         using (var connection = _dataContext.CreateConnection())
@@ -41,7 +41,6 @@ public class PackageAcquisitionService
             {
                 try
                 {
-                    // Get next available package
                     var package = _packageRepository.GetNextAvailablePackage(connection, transaction);
 
                     if (package == null)
@@ -49,15 +48,12 @@ public class PackageAcquisitionService
                         transaction.Rollback();
                         return new OperationResult { Success = false, ErrorMessage = "No packages available." };
                     }
-
-                    // Deduct gold from user
+                    
                     user.Gold -= packageCost;
                     _userRepository.UpdateUserWithConnection(user, connection, transaction);
-
-                    // Remove package
+                    
                     _packageRepository.RemovePackage(package.PackageId, connection, transaction);
-
-                    // Add cards to user's stack
+                    
                     _stackRepository.AddCardsToUserStack(user.UserId, package.Cards, connection, transaction);
 
                     transaction.Commit();

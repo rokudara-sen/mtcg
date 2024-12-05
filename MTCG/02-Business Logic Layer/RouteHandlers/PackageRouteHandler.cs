@@ -7,15 +7,12 @@ namespace MTCG._02_Business_Logic_Layer.RouteHandlers
     public class PackageRouteHandler : IRouteHandler
     {
         private readonly IPackageRepository _packageRepository;
-        private readonly CardRouteHandler _cardRouteHandler;
         private readonly UserRouteHandler _userRouteHandler;
 
         public PackageRouteHandler(IPackageRepository packageRepository,
-            CardRouteHandler cardRouteHandler,
             UserRouteHandler userRouteHandler)
         {
             _packageRepository = packageRepository ?? throw new ArgumentNullException(nameof(packageRepository));
-            _cardRouteHandler = cardRouteHandler ?? throw new ArgumentNullException(nameof(cardRouteHandler));
             _userRouteHandler = userRouteHandler ?? throw new ArgumentNullException(nameof(userRouteHandler));
         }
 
@@ -29,15 +26,6 @@ namespace MTCG._02_Business_Logic_Layer.RouteHandlers
             if (user == null || !CheckIfAdmin(user))
             {
                 return new OperationResult { Success = false, ErrorMessage = "Not Authorized" };
-            }
-
-            foreach (var card in package.Cards)
-            {
-                var result = _cardRouteHandler.CreateCard(card);
-                if (!result.Success)
-                {
-                    return result;
-                }
             }
 
             _packageRepository.AddPackage(package);

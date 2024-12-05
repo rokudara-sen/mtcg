@@ -1,7 +1,6 @@
 using System.Data;
 using MTCG._03_Data_Access_Layer.Interfaces;
 using MTCG._06_Domain.Entities;
-using Npgsql;
 
 namespace MTCG._03_Data_Access_Layer.Repositories;
 

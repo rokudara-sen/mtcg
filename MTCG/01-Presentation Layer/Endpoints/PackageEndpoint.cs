@@ -206,9 +206,8 @@ public class PackageEndpoint : IEndpoint
 
         if (result.Success)
         {
-            response.StatusCode = 200;
+            response.StatusCode = 201;
             response.ReasonPhrase = "OK";
-            response.Body = "Package acquired successfully";
         }
         else
         {
