@@ -17,7 +17,6 @@
     <ItemGroup>
       <Folder Include="02-Business Logic Layer\Models\" />
       <Folder Include="06-Domain\Exceptions\" />
-      <Folder Include="06-Domain\ValueObjects\" />
     </ItemGroup>
 
     <ItemGroup>
