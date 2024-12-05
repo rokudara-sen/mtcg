@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
-using MTCG._01_Shared.Enums;
+using MTCG._06_Domain.Enums;
 
-namespace MTCG._06_Domain.ValueObjects;
+namespace MTCG._06_Domain.Entities;
 
 public class Card
 {

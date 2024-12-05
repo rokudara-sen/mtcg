@@ -1,80 +1,85 @@
-using MTCG._01_Shared;
-using MTCG._01_Shared.Enums;
 using MTCG._02_Business_Logic_Layer.Interfaces;
-using MTCG._03_Data_Access_Layer.DataContext;
+using MTCG._03_Data_Access_Layer.Interfaces;
 using MTCG._06_Domain.Entities;
-using MTCG._06_Domain.ValueObjects;
+using MTCG._06_Domain.Enums;
 
-namespace MTCG._02_Business_Logic_Layer.RouteHandlers;
-
-public class CardRouteHandler : IRouteHandler
+namespace MTCG._02_Business_Logic_Layer.RouteHandlers
 {
-    private readonly CardDataContext _dataContext = new(GlobalRegistry._connectionString);
-
-    public OperationResult CreateCard(Card? card)
+    public class CardRouteHandler : IRouteHandler
     {
-        if (card == null)
-        {
-            return new OperationResult { Success = false, ErrorMessage = "Card cannot be null." };
-        }
-
-        if (string.IsNullOrWhiteSpace(card.CardName) || card.Damage <= 0 || string.IsNullOrWhiteSpace(card.ElementType.ToString()) ||
-            string.IsNullOrWhiteSpace(card.CardType.ToString()) || string.IsNullOrWhiteSpace(card.Id))
-        {
-            return new OperationResult { Success = false, ErrorMessage = "Invalid card." };
-        }
-
-        if (CardAlreadyExist(card))
-        {
-            return new OperationResult { Success = false, ErrorMessage = "Card already exist." };
-        }
+        private readonly ICardRepository _cardRepository;
         
-        SpecifyCardElement(card);
-        SpecifyCardType(card);
-        _dataContext.Add(card);
+        public CardRouteHandler(ICardRepository cardRepository)
+        {
+            _cardRepository = cardRepository ?? throw new ArgumentNullException(nameof(cardRepository));
+        }
 
-        return new OperationResult { Success = true };
-    }
+        public OperationResult CreateCard(Card? card)
+        {
+            if (card == null)
+            {
+                return new OperationResult { Success = false, ErrorMessage = "Card cannot be null." };
+            }
 
-    public bool CardAlreadyExist(Card card)
-    {
-        var tempCard = _dataContext.GetByStringId<Card>(card.Id);
-        return tempCard != null;
-    }
+            if (string.IsNullOrWhiteSpace(card.CardName) || card.Damage <= 0 || string.IsNullOrWhiteSpace(card.Id))
+            {
+                return new OperationResult { Success = false, ErrorMessage = "Invalid card." };
+            }
 
-    private void SpecifyCardType(Card card)
-    {
-        if (card.CardName.Contains("Spell"))
-        {
-            card.CardType = CardType.SpellCard;
+            if (CardAlreadyExists(card))
+            {
+                return new OperationResult { Success = false, ErrorMessage = "Card already exists." };
+            }
+
+            SpecifyCardElement(card);
+            SpecifyCardType(card);
+            _cardRepository.AddCard(card);
+
+            return new OperationResult { Success = true };
         }
-        else if (card.CardName.Contains("Goblin") || card.CardName.Contains("Dragon") || card.CardName.Contains("Elf") || card.CardName.Contains("Knight") || card.CardName.Contains("Kraken") || card.CardName.Contains("Wizard") || card.CardName.Contains("Ork"))
+
+        private bool CardAlreadyExists(Card card)
         {
-            card.CardType = CardType.MonsterCard;
+            var tempCard = _cardRepository.GetCardByIdentifier(card.Id);
+            return tempCard != null;
         }
-        else
+
+        private void SpecifyCardType(Card card)
         {
-            card.CardType = CardType.NotDefined;
+            if (card.CardName.Contains("Spell"))
+            {
+                card.CardType = CardType.SpellCard;
+            }
+            else if (card.CardName.Contains("Goblin") || card.CardName.Contains("Dragon") || card.CardName.Contains("Elf") ||
+                     card.CardName.Contains("Knight") || card.CardName.Contains("Kraken") || card.CardName.Contains("Wizard") ||
+                     card.CardName.Contains("Ork"))
+            {
+                card.CardType = CardType.MonsterCard;
+            }
+            else
+            {
+                card.CardType = CardType.NotDefined;
+            }
         }
-    }
-    
-    private void SpecifyCardElement(Card card)
-    {
-        if (card.CardName.Contains("Water"))
+
+        private void SpecifyCardElement(Card card)
         {
-            card.ElementType = ElementType.Water;
-        }
-        else if (card.CardName.Contains("Fire"))
-        {
-            card.ElementType = ElementType.Fire;
-        }
-        else if (card.CardName.Contains("Normal"))
-        {
-            card.ElementType = ElementType.Water;
-        }
-        else
-        {
-            card.ElementType = ElementType.NotDefined;
+            if (card.CardName.Contains("Water"))
+            {
+                card.ElementType = ElementType.Water;
+            }
+            else if (card.CardName.Contains("Fire"))
+            {
+                card.ElementType = ElementType.Fire;
+            }
+            else if (card.CardName.Contains("Normal"))
+            {
+                card.ElementType = ElementType.Normal;
+            }
+            else
+            {
+                card.ElementType = ElementType.NotDefined;
+            }
         }
     }
 }

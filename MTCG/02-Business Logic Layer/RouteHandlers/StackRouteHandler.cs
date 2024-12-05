@@ -1,4 +1,4 @@
-using MTCG._01_Shared;
+/*using MTCG._01_Shared;
 using MTCG._02_Business_Logic_Layer.Interfaces;
 using MTCG._03_Data_Access_Layer.DataContext;
 using MTCG._06_Domain.Entities;
@@ -8,7 +8,7 @@ namespace MTCG._02_Business_Logic_Layer.RouteHandlers;
 
 public class StackRouteHandler : IRouteHandler
 {
-    private readonly StackDataContext _dataContext = new(GlobalRegistry._connectionString);
+    private readonly StackRepository _repository = new(GlobalRegistry._connectionString);
     private readonly CardRouteHandler _cardRouteHandler = new();
 
     public async Task<OperationResult> AddCardToStash(Card card)
@@ -35,14 +35,14 @@ public class StackRouteHandler : IRouteHandler
             return new OperationResult { Success = true };
         }
         
-        _dataContext.Add(card);
+        _repository.Add(card);
 
         return new OperationResult { Success = true };
     }
     
     private bool CardAlreadyExistInStash(Card card)
     {
-        var tempCard = _dataContext.GetByStringId<Card>(card.Id);
+        var tempCard = _repository.GetByStringId<Card>(card.Id);
         if (tempCard == null || tempCard.Id != card.Id)
             return false;
         return tempCard.Id == card.Id;
@@ -50,6 +50,6 @@ public class StackRouteHandler : IRouteHandler
     
     private void IncreaseCardAmountInStash(Card card)
     {
-        _dataContext.IncreaseCardAmount<Card>(card.Id);
+        _repository.IncreaseCardAmount<Card>(card.Id);
     }
-}
+}*/

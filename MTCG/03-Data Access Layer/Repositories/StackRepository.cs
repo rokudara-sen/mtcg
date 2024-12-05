@@ -1,11 +1,11 @@
 using System.Data;
 using MTCG._03_Data_Access_Layer.Interfaces;
-using MTCG._06_Domain.ValueObjects;
+using MTCG._06_Domain.Entities;
 using Npgsql;
 
-namespace MTCG._03_Data_Access_Layer.DataContext;
+namespace MTCG._03_Data_Access_Layer.Repositories;
 
-public class StackDataContext(string connectionString) : IDataContext
+public class StackRepository(string connectionString) : IDataContext
 {
     public IDbConnection CreateConnection()
     {

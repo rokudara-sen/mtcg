@@ -1,123 +1,127 @@
-using MTCG._01_Shared;
 using MTCG._02_Business_Logic_Layer.Interfaces;
-using MTCG._03_Data_Access_Layer.DataContext;
+using MTCG._03_Data_Access_Layer.Interfaces;
 using MTCG._06_Domain.Entities;
 
-namespace MTCG._02_Business_Logic_Layer.RouteHandlers;
-
-public class UserRouteHandler : IRouteHandler
+namespace MTCG._02_Business_Logic_Layer.RouteHandlers
 {
-    private readonly UserDataContext _dataContext = new(GlobalRegistry._connectionString);
-
-    public OperationResult RegisterUser(UserCredentials credentials)
+    public class UserRouteHandler : IRouteHandler
     {
-        var validation = ValidateCredentials(credentials);
-        if (!validation.Success)
+        private readonly IUserRepository _userRepository;
+
+        // Constructor Injection
+        public UserRouteHandler(IUserRepository userRepository)
         {
-            return validation;
+            _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         }
 
-        if (GetUserByUsername(credentials.Username) != null)
+        public OperationResult RegisterUser(UserCredentials credentials)
         {
-            return new OperationResult { Success = false, ErrorMessage = "Username is already taken" };
+            var validation = ValidateCredentials(credentials);
+            if (!validation.Success)
+            {
+                return validation;
+            }
+
+            if (GetUserByUsername(credentials.Username) != null)
+            {
+                return new OperationResult { Success = false, ErrorMessage = "Username is already taken" };
+            }
+
+            credentials.Password = HashPassword(credentials.Password);
+
+            var newUser = new User(credentials.Username, credentials.Password);
+            _userRepository.AddUser(newUser);
+
+            return new OperationResult { Success = true };
         }
-            
-        
-        credentials.Password = HashPassword(credentials.Password);
 
-        var newUser = new User(credentials.Username, credentials.Password);
-        _dataContext.Add(newUser);
-
-        return new OperationResult { Success = true };
-    }
-
-    public OperationResult LoginUser(UserCredentials credentials)
-    {
-        var user = GetUserByUsername(credentials.Username);
-        if (user == null || !VerifyPassword(credentials.Password, user.Password))
+        public OperationResult LoginUser(UserCredentials credentials)
         {
-            return new OperationResult { Success = false, ErrorMessage = "Invalid username or password" };
-        }
-        
+            var user = GetUserByUsername(credentials.Username);
+            if (user == null || !VerifyPassword(credentials.Password, user.Password))
+            {
+                return new OperationResult { Success = false, ErrorMessage = "Invalid username or password" };
+            }
 
-        if (!IsValidUser(user))
+            if (!IsValidUser(user))
+            {
+                return new OperationResult { Success = false, ErrorMessage = "User data is invalid." };
+            }
+
+            user.Authorization = GenerateAuthToken(user.Username);
+            _userRepository.UpdateUser(user);
+
+            return new OperationResult { Success = true, Data = user.Authorization };
+        }
+
+        public User? GetUserByAuthToken(string? authToken)
         {
-            return new OperationResult { Success = false, ErrorMessage = "User data is invalid." };
+            if (string.IsNullOrEmpty(authToken))
+            {
+                return null;
+            }
+            return _userRepository.GetUserByAuthToken(authToken);
         }
-        
-        user.Authorization = GenerateAuthToken(user.Username);
-        _dataContext.Update(user);
 
-        return new OperationResult { Success = true, Data = user.Authorization };
-    }
-
-    public User? GetUserByAuthToken(string? authToken)
-    {
-        if (authToken == null)
+        public OperationResult UpdateUserByAuthToken(string authToken, User updatedUser)
         {
-            return null;
+            var existingUser = GetUserByAuthToken(authToken);
+            if (existingUser == null)
+                return new OperationResult { Success = false, ErrorMessage = "Invalid auth token." };
+
+            UpdateUserDetails(existingUser, updatedUser);
+            _userRepository.UpdateUser(existingUser);
+
+            return new OperationResult { Success = true };
         }
-        return _dataContext.GetByAuthToken<User>(authToken);
-    }
-    
-    public OperationResult UpdateUserByAuthToken(string authToken, User updatedUser)
-    {
-        var existingUser = GetUserByAuthToken(authToken);
-        if (existingUser == null)
-            return new OperationResult { Success = false, ErrorMessage = "Invalid auth token." };
 
-        UpdateUserDetails(existingUser, updatedUser);
-        _dataContext.Update(existingUser);
-
-        return new OperationResult { Success = true };
-    }
-    
-    private User? GetUserByUsername(string username)
-    {
-        return username == string.Empty ? null : _dataContext.GetByUsername<User>(username);
-    }
-
-    private static void UpdateUserDetails(User existingUser, User updatedUser)
-    {
-        existingUser.Elo = updatedUser.Elo;
-        existingUser.Gold = updatedUser.Gold;
-        existingUser.Wins = updatedUser.Wins;
-        existingUser.Losses = updatedUser.Losses;
-    }
-
-    private string GenerateAuthToken(string username)
-    {
-        return $"{username}-mtcgToken";
-    }
-    
-    private static string HashPassword(string password)
-    { 
-        return BCrypt.Net.BCrypt.HashPassword(password);
-    }
-
-    private static bool VerifyPassword(string password, string hashedPassword)
-    { 
-        return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
-    }
-
-    public bool IsValidUser(User? user)
-    {
-        return user != null &&
-               !string.IsNullOrWhiteSpace(user.Username) &&
-               !string.IsNullOrWhiteSpace(user.Password) &&
-               user is { Elo: >= 0, Gold: >= 0, Wins: >= 0, Losses: >= 0 };
-    }
-    
-    private static OperationResult ValidateCredentials(UserCredentials credentials)
-    {
-        if (string.IsNullOrWhiteSpace(credentials.Username))
+        private User? GetUserByUsername(string username)
         {
-            return new OperationResult { Success = false, ErrorMessage = "Username cannot be empty." };
+            return string.IsNullOrWhiteSpace(username) ? null : _userRepository.GetUserByUsername(username);
         }
-        if (string.IsNullOrWhiteSpace(credentials.Password))
+
+        private static void UpdateUserDetails(User existingUser, User updatedUser)
         {
-            return new OperationResult { Success = false, ErrorMessage = "Password cannot be empty." };
+            existingUser.Elo = updatedUser.Elo;
+            existingUser.Gold = updatedUser.Gold;
+            existingUser.Wins = updatedUser.Wins;
+            existingUser.Losses = updatedUser.Losses;
         }
-        return new OperationResult { Success = true};
+
+        private string GenerateAuthToken(string username)
+        {
+            return $"{username}-mtcgToken";
+        }
+
+        private static string HashPassword(string password)
+        {
+            return BCrypt.Net.BCrypt.HashPassword(password);
+        }
+
+        private static bool VerifyPassword(string password, string hashedPassword)
+        {
+            return BCrypt.Net.BCrypt.Verify(password, hashedPassword);
+        }
+
+        public bool IsValidUser(User? user)
+        {
+            return user != null &&
+                   !string.IsNullOrWhiteSpace(user.Username) &&
+                   !string.IsNullOrWhiteSpace(user.Password) &&
+                   user is { Elo: >= 0, Gold: >= 0, Wins: >= 0, Losses: >= 0 };
+        }
+
+        private static OperationResult ValidateCredentials(UserCredentials credentials)
+        {
+            if (string.IsNullOrWhiteSpace(credentials.Username))
+            {
+                return new OperationResult { Success = false, ErrorMessage = "Username cannot be empty." };
+            }
+            if (string.IsNullOrWhiteSpace(credentials.Password))
+            {
+                return new OperationResult { Success = false, ErrorMessage = "Password cannot be empty." };
+            }
+            return new OperationResult { Success = true };
+        }
     }
 }

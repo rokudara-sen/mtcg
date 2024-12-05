@@ -2,22 +2,22 @@ namespace MTCG._00_Server;
 
 internal class StreamTracer
 {
-    private StreamWriter streamWriter;
+    private StreamWriter _streamWriter;
 
     public StreamTracer(StreamWriter streamWriter)
     {
-        this.streamWriter = streamWriter;
+        _streamWriter = streamWriter;
     }
 
     internal async Task WriteLineAsync(string v)
     {
         Console.WriteLine(v);
-        await streamWriter.WriteLineAsync(v);
+        await _streamWriter.WriteLineAsync(v);
     }
 
     internal async Task WriteLineAsync()
     {
         Console.WriteLine();
-        await streamWriter.WriteLineAsync();
+        await _streamWriter.WriteLineAsync();
     }
 }

@@ -1,38 +1,31 @@
-using MTCG._01_Shared;
-using MTCG._02_Business_Logic_Layer.Interfaces;
-using MTCG._02_Business_Logic_Layer.RouteHandlers;
-using MTCG._01_Presentation_Layer.Endpoints;
 using MTCG._01_Presentation_Layer.Interfaces;
 using MTCG._01_Presentation_Layer.Models.Http;
 
-namespace MTCG._02_Business_Logic_Layer.Services;
-
-public class Router
+namespace MTCG._02_Business_Logic_Layer.Services
 {
-    private readonly List<IEndpoint> _endpoints;
+    public class Router
+    {
+        private readonly List<IEndpoint> _endpoints;
 
-    public Router()
-    {
-        _endpoints =
-        [
-            new UserEndpoint(),
-            new PackageEndpoint(),
-            new StackEndpoint()
-        ];
-    }
-    public async Task RouteRequest(Request request, Response response)
-    {
-        foreach (var endpoint in _endpoints)
+        public Router(IEnumerable<IEndpoint> endpoints)
         {
-            if (endpoint.CanHandle(request))
-            {
-                await endpoint.HandleRequest(request, response);
-                return;
-            }
+            _endpoints = endpoints.ToList() ?? throw new ArgumentNullException(nameof(endpoints));
         }
-        
-        response.StatusCode = 404;
-        response.ReasonPhrase = "Not Found";
-        response.Body = "The requested resource was not found.";
+
+        public async Task RouteRequest(Request request, Response response)
+        {
+            foreach (var endpoint in _endpoints)
+            {
+                if (endpoint.CanHandle(request))
+                {
+                    await endpoint.HandleRequest(request, response);
+                    return;
+                }
+            }
+            
+            response.StatusCode = 404;
+            response.ReasonPhrase = "Not Found";
+            response.Body = "The requested resource was not found.";
+        }
     }
 }

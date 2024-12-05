@@ -1,47 +1,54 @@
-using MTCG._01_Shared;
 using MTCG._02_Business_Logic_Layer.Interfaces;
-using MTCG._03_Data_Access_Layer.DataContext;
+using MTCG._03_Data_Access_Layer.Interfaces;
 using MTCG._06_Domain.Entities;
-using MTCG._06_Domain.ValueObjects;
 
-namespace MTCG._02_Business_Logic_Layer.RouteHandlers;
-
-public class PackageRouteHandler : IRouteHandler
+namespace MTCG._02_Business_Logic_Layer.RouteHandlers
 {
-    private readonly PackageDataContext _dataContext = new(GlobalRegistry._connectionString);
-    private readonly CardRouteHandler _cardRouteHandler = new();
-    private readonly UserRouteHandler _userRouteHandler = new();
-    
-    public OperationResult CreatePackage(User user, Package package)
+    public class PackageRouteHandler : IRouteHandler
     {
-        if (!_userRouteHandler.IsValidUser(user))
-        {
-            return new OperationResult { Success = false, ErrorMessage = "User data is invalid." };
-        }
-        var tempUser = _userRouteHandler.GetUserByAuthToken(user.Authorization);
-        if (tempUser == null || !CheckIfAdmin(tempUser))
-        {
-            return new OperationResult { Success = false, ErrorMessage = "Not Authorized" };
-        }
-       
-        foreach (var card in package.Cards)
-        {
-            _cardRouteHandler.CreateCard(card);
-        }
+        private readonly IPackageRepository _packageRepository;
+        private readonly CardRouteHandler _cardRouteHandler;
+        private readonly UserRouteHandler _userRouteHandler;
         
-        _dataContext.Add(package);
-
-        return new OperationResult { Success = true };
-    }
-
-    public bool CheckIfAdmin(User? user)
-    {
-        if (user == null || string.IsNullOrWhiteSpace(user.Authorization))
+        public PackageRouteHandler(
+            IPackageRepository packageRepository,
+            CardRouteHandler cardRouteHandler,
+            UserRouteHandler userRouteHandler)
         {
-            return false;
+            _packageRepository = packageRepository ?? throw new ArgumentNullException(nameof(packageRepository));
+            _cardRouteHandler = cardRouteHandler ?? throw new ArgumentNullException(nameof(cardRouteHandler));
+            _userRouteHandler = userRouteHandler ?? throw new ArgumentNullException(nameof(userRouteHandler));
         }
-            
-        var tempUser = _userRouteHandler.GetUserByAuthToken(user.Authorization);
-        return tempUser is { Authorization: "admin-mtcgToken" };
+
+        public OperationResult CreatePackage(User? user, Package package)
+        {
+            if (!_userRouteHandler.IsValidUser(user))
+            {
+                return new OperationResult { Success = false, ErrorMessage = "User data is invalid." };
+            }
+
+            if (user == null || !CheckIfAdmin(user))
+            {
+                return new OperationResult { Success = false, ErrorMessage = "Not Authorized" };
+            }
+
+            foreach (var card in package.Cards)
+            {
+                var result = _cardRouteHandler.CreateCard(card);
+                if (!result.Success)
+                {
+                    return result; // Return the error from card creation
+                }
+            }
+
+            _packageRepository.AddPackage(package);
+
+            return new OperationResult { Success = true };
+        }
+
+        public bool CheckIfAdmin(User? user)
+        {
+            return user is { Authorization: "admin-mtcgToken" };
+        }
     }
 }

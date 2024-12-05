@@ -5,7 +5,7 @@ public class Request
     public string Method { get; set; } = "";
     public string Path { get; set; } = "";
     public string HttpVersion { get; set; } = "";
-    public Dictionary<string, string> Headers { get; set; } = new();
+    public Dictionary<string, string> Headers { get; } = new();
     public string Body { get; set; } = "";
-    public Dictionary<string, string> RouteParameters { get; set; }
+    public Dictionary<string, string>? RouteParameters { get; set; }
 }

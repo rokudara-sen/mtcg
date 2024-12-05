@@ -1,4 +1,4 @@
-namespace MTCG._01_Shared.Enums;
+namespace MTCG._06_Domain.Enums;
 
 public enum ElementType
 {

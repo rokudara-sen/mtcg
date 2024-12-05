@@ -31,7 +31,7 @@ public class HttpRequest
                 break;  // Empty line indicates the end of the headers
             }
 
-            var headerParts = line.Split(new[] { ':' }, 2);
+            var headerParts = line.Split([':'], 2);
             if (headerParts.Length == 2)
             {
                 var headerName = headerParts[0].Trim();

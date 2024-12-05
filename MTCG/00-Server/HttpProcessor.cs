@@ -2,33 +2,34 @@ using System.Net.Sockets;
 using MTCG._01_Presentation_Layer.Models.Http;
 using MTCG._02_Business_Logic_Layer.Services;
 
-namespace MTCG._00_Server;
-
-public class HttpProcessor
+namespace MTCG._00_Server
 {
-    private readonly HttpRequest _requestHandler;
-    private readonly HttpResponse _responseHandler;
-    private readonly Router _router;
-
-    public HttpProcessor()
+    public class HttpProcessor
     {
-        _router = new Router();
-        _requestHandler = new HttpRequest();
-        _responseHandler = new HttpResponse();
-    }
+        private readonly HttpRequest _requestHandler;
+        private readonly HttpResponse _responseHandler;
+        private readonly Router _router;
 
-    public async Task ProcessRequest(TcpClient clientSocket)
-    {
-        using var networkStream = clientSocket.GetStream();
-        using var reader = new StreamReader(networkStream);
-        using var writer = new StreamWriter(networkStream);
-        writer.AutoFlush = true;
+        public HttpProcessor(Router router)
+        {
+            _router = router ?? throw new ArgumentNullException(nameof(router));
+            _requestHandler = new HttpRequest();
+            _responseHandler = new HttpResponse();
+        }
 
-        var request = await _requestHandler.ReadRequestAsync(reader);
-        var response = new Response();
+        public async Task ProcessRequest(TcpClient clientSocket)
+        {
+            await using var networkStream = clientSocket.GetStream();
+            using var reader = new StreamReader(networkStream);
+            await using var writer = new StreamWriter(networkStream);
+            writer.AutoFlush = true;
 
-        await _router.RouteRequest(request, response);
+            var request = await _requestHandler.ReadRequestAsync(reader);
+            var response = new Response();
 
-        await _responseHandler.SendResponseAsync(writer, response);
+            await _router.RouteRequest(request, response);
+
+            await _responseHandler.SendResponseAsync(writer, response);
+        }
     }
 }

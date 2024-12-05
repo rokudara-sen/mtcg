@@ -1,5 +1,3 @@
-using MTCG._06_Domain.ValueObjects;
-
 namespace MTCG._06_Domain.Entities;
 
 public class Stack
