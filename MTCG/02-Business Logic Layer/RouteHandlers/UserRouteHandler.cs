@@ -14,7 +14,7 @@ namespace MTCG._02_Business_Logic_Layer.RouteHandlers
             _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
         }
 
-        public OperationResult RegisterUser(UserCredentials credentials)
+        public OperationResult RegisterUser(UserCredentials? credentials)
         {
             var validation = ValidateCredentials(credentials);
             if (!validation.Success)
@@ -24,7 +24,7 @@ namespace MTCG._02_Business_Logic_Layer.RouteHandlers
 
             if (GetUserByUsername(credentials.Username) != null)
             {
-                return new OperationResult { Success = false, ErrorMessage = "Username is already taken" };
+                return new OperationResult { Success = false, ErrorMessage = "Username is already taken." };
             }
 
             credentials.Password = HashPassword(credentials.Password);
@@ -35,12 +35,17 @@ namespace MTCG._02_Business_Logic_Layer.RouteHandlers
             return new OperationResult { Success = true };
         }
 
-        public OperationResult LoginUser(UserCredentials credentials)
+        public OperationResult LoginUser(UserCredentials? credentials)
         {
+            var validation = ValidateCredentials(credentials);
+            if (!validation.Success)
+            {
+                return validation;
+            }
             var user = GetUserByUsername(credentials.Username);
             if (user == null || !VerifyPassword(credentials.Password, user.Password))
             {
-                return new OperationResult { Success = false, ErrorMessage = "Invalid username or password" };
+                return new OperationResult { Success = false, ErrorMessage = "Invalid username or password." };
             }
 
             if (!IsValidUser(user))
@@ -75,7 +80,7 @@ namespace MTCG._02_Business_Logic_Layer.RouteHandlers
             return new OperationResult { Success = true };
         }
 
-        private User? GetUserByUsername(string username)
+        private User? GetUserByUsername(string? username)
         {
             return string.IsNullOrWhiteSpace(username) ? null : _userRepository.GetUserByUsername(username);
         }
@@ -111,8 +116,12 @@ namespace MTCG._02_Business_Logic_Layer.RouteHandlers
                    user is { Elo: >= 0, Gold: >= 0, Wins: >= 0, Losses: >= 0 };
         }
 
-        private static OperationResult ValidateCredentials(UserCredentials credentials)
+        private static OperationResult ValidateCredentials(UserCredentials? credentials)
         {
+            if (credentials == null)
+            {
+                return new OperationResult { Success = false, ErrorMessage = "Invalid credentials." };
+            }
             if (string.IsNullOrWhiteSpace(credentials.Username))
             {
                 return new OperationResult { Success = false, ErrorMessage = "Username cannot be empty." };
