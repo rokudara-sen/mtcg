@@ -169,4 +169,105 @@ public class UserRouteHandlerTest
         Assert.IsFalse(result.Success, "Expected Success to be false for empty password.");
         Assert.AreEqual("Password cannot be empty.", result.ErrorMessage, "Unexpected error message for empty password.");
     }
+    
+    [TestMethod]
+    [Description("Login a user with valid credentials should return success.")]
+    public void LoginUser_ValidCredentials_ReturnsSuccess()
+    {
+        // Arrange
+        var userCredentials = new UserCredentials
+        {
+            Username = "username",
+            Password = "password",
+        };
+        
+        var hashedPassword = BCrypt.Net.BCrypt.HashPassword("password");
+        _mockUserRepository.GetUserByUsername(userCredentials.Username).Returns(new User("username", hashedPassword));
+
+        // Act
+        var result = _handler.LoginUser(userCredentials);
+
+        // Assert
+        Assert.IsTrue(result.Success, "Expected Success to be true for a successful login.");
+        Assert.IsNull(result.ErrorMessage, "Expected ErrorMessage to be null for a successful login.");
+    }
+    
+    [TestMethod]
+    [Description("Login a user with valid credentials but receive invalid user data should return a failure.")]
+    public void LoginUser_InvalidUserData_ReturnsFailure()
+    {
+        // Arrange
+        var userCredentials = new UserCredentials
+        {
+            Username = "username",
+            Password = "password",
+        };
+        
+        var hashedPassword = BCrypt.Net.BCrypt.HashPassword("password");
+        _mockUserRepository.GetUserByUsername(userCredentials.Username).Returns(new User("", hashedPassword));
+
+        // Act
+        var result = _handler.LoginUser(userCredentials);
+
+        // Assert
+        Assert.IsFalse(result.Success, "Expected Success to be false for invalid user data.");
+        Assert.AreEqual("User data is invalid.", result.ErrorMessage, "Unexpected error message for invalid user data.");
+    }
+    
+    [TestMethod]
+    [Description("Login a user with valid credentials should return success and generate a valid auth token.")]
+    public void LoginUser_ValidCredentials_GeneratesAuthToken()
+    {
+        // Arrange
+        var userCredentials = new UserCredentials
+        {
+            Username = "valid-user",
+            Password = "valid-password",
+        };
+        
+        var hashedPassword = BCrypt.Net.BCrypt.HashPassword("valid-password");
+        var existingUser = new User("valid-user", hashedPassword);
+        _mockUserRepository.GetUserByUsername(userCredentials.Username).Returns(existingUser);
+
+        // Act
+        var result = _handler.LoginUser(userCredentials);
+        var authToken = result.Data!;
+
+        // Assert
+        Assert.IsTrue(result.Success, "Expected Success to be true for a valid login.");
+        Assert.IsNotNull(result.Data, "Expected Data to contain the generated auth token.");
+        Assert.IsTrue(authToken.StartsWith("valid-user-"), "Expected auth token to start with the username.");
+        Assert.IsTrue(authToken.EndsWith("-mtcgToken"), "Expected auth token to end with '-mtcgToken'.");
+        Assert.IsNull(result.ErrorMessage, "Expected ErrorMessage to be null for a successful login.");
+    }
+    
+    [TestMethod]
+    [Description("Login a user with valid credentials but negative user stats should return a failure due to IsValidUser failing.")]
+    public void LoginUser_InvalidUserStats_ReturnsFailure()
+    {
+        // Arrange
+        var userCredentials = new UserCredentials
+        {
+            Username = "username",
+            Password = "password",
+        };
+        
+        var hashedPassword = BCrypt.Net.BCrypt.HashPassword("password");
+        var invalidUser = new User("username", hashedPassword)
+        {
+            Elo = -1,   
+            Gold = 20,
+            Wins = 0,
+            Losses = 0
+        };
+        
+        _mockUserRepository.GetUserByUsername(userCredentials.Username).Returns(invalidUser);
+
+        // Act
+        var result = _handler.LoginUser(userCredentials);
+
+        // Assert
+        Assert.IsFalse(result.Success, "Expected Success to be false for invalid user data.");
+        Assert.AreEqual("User data is invalid.", result.ErrorMessage, "Unexpected error message for invalid user data.");
+    }
 }
