@@ -152,7 +152,6 @@ public class PackageEndpoint : IEndpoint
             return Task.CompletedTask;
         }
 
-        // Create the cards using CardRouteHandler
         foreach (var card in cardsList)
         {
             var result = _cardRouteHandler.CreateCard(card);
@@ -165,7 +164,6 @@ public class PackageEndpoint : IEndpoint
             }
         }
 
-        // Create the package
         var package = new Package(cardsList);
         var packageResult = _packageRouteHandler.CreatePackage(user, package);
 
