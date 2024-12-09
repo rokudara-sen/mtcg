@@ -17,52 +17,35 @@ class Program
 {
     public static async Task Main(string[] args)
     {
-        // Create a new ServiceCollection
         var serviceCollection = new ServiceCollection();
-
-        // Register configuration or settings if needed
         var connectionString = "Host=localhost;Username=admin;Password=admin;Database=mtcgdatabase";
 
-        // Register IDataContext
+        // IDataContext
         serviceCollection.AddSingleton<IDataContext>(provider => new DataContext(connectionString));
 
-        // Register Repositories
+        // Repositories
         serviceCollection.AddTransient<ICardRepository, CardRepository>();
         serviceCollection.AddTransient<IPackageRepository, PackageRepository>();
         serviceCollection.AddTransient<IUserRepository, UserRepository>();
         serviceCollection.AddTransient<IStackRepository, StackRepository>();
-        // Register other repositories as needed
 
-        // Register Route Handlers
+        // Route Handlers
         serviceCollection.AddTransient<CardRouteHandler>();
         serviceCollection.AddTransient<PackageRouteHandler>();
         serviceCollection.AddTransient<UserRouteHandler>();
-        // Register other route handlers as needed
 
-        // Register Endpoints
+        // Endpoints
         serviceCollection.AddTransient<IEndpoint, PackageEndpoint>();
         serviceCollection.AddTransient<IEndpoint, UserEndpoint>();
-        // Register other endpoints as needed
         
-        // Register Services
+        // Services
         serviceCollection.AddTransient<PackageAcquisitionService>();
 
-        // Build the ServiceProvider
         var serviceProvider = serviceCollection.BuildServiceProvider();
-
-        // Resolve the required services
         var endpoints = serviceProvider.GetServices<IEndpoint>().ToList();
-
-        // Create the Router with injected endpoints
         var router = new Router(endpoints);
-
-        // Create the HttpProcessor with injected router
         var httpProcessor = new HttpProcessor(router);
-
-        // Create the TcpServer with injected HttpProcessor
         var server = new TcpServer(IPAddress.Any, 10001, httpProcessor);
-
-        // Start the server
         await server.StartAsync();
     }
 }
